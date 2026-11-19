@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Bridge - Endpoint Data Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #0d1b2a;
+            color: #e0e1dd;
+        }
+
+        /* Flexbox navigation bar (from Practicum 6) */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            background-color: #1b263b;
+            padding: 15px 40px;
+            border-bottom: 2px solid #00b4d8;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 900;
+            color: #00b4d8;
+        }
+        .nav-links {
+            display: flex;
+            gap: 25px;
+            list-style: none;
+            flex-wrap: wrap;
+            margin: 0;
+            padding: 0;
+        }
+        .nav-links li a {
+            text-decoration: none;
+            color: #e0e1dd;
+            font-size: 16px;
+        }
+        .nav-links li a:hover {
+            color: #90e0ef;
+        }
+
+        /* Section heading */
+        .endpoint-heading {
+            text-align: center;
+            margin-top: 100px;
+            color: #00b4d8;
+        }
+        .endpoint-heading p {
+            color: #e0e1dd;
+            font-size: 14px;
+        }
+
+        .endpoint-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px 40px 60px;
+        }
+
+        /* Lookup box */
+        .lookup-box {
+            background-color: #1b263b;
+            border: 1px solid #00b4d8;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        .lookup-box h3 {
+            color: #00b4d8;
+            margin-top: 0;
+        }
+        .field {
+            margin-bottom: 18px;
+        }
+        .field label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #90e0ef;
+        }
+        .field input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #00b4d8;
+            background-color: #0d1b2a;
+            color: #e0e1dd;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .error-msg {
+            display: block;
+            min-height: 16px;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #ff6b6b;
+        }
+
+        .lookup-box button {
+            background-color: #00b4d8;
+            color: #0d1b2a;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .lookup-box button:hover {
+            background-color: #90e0ef;
+        }
+        .lookup-box button:disabled {
+            background-color: #577590;
+            cursor: not-allowed;
+        }
+
+        #fetch-status {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        .status-success {
+            color: #00b4d8;
+        }
+        .status-error {
+            color: #ff6b6b;
+        }
+        .status-loading {
+            color: #90e0ef;
+        }
+
+        /* Result display */
+        .result-box {
+            background-color: #1b263b;
+            border: 1px solid #00b4d8;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        .result-box h3 {
+            margin-top: 0;
+            color: #00b4d8;
+        }
+        #price-result {
+            font-size: 28px;
+            font-weight: bold;
+            color: #90e0ef;
+        }
+
+        /* Debug / request log panel */
+        .log-box {
+            background-color: #1b263b;
+            border: 1px solid #00b4d8;
+            border-radius: 8px;
+            padding: 25px;
+        }
+        .log-box h3 {
+            margin-top: 0;
+            color: #00b4d8;
+        }
+        #request-log {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        #request-log li {
+            padding: 8px 10px;
+            border-bottom: 1px solid #0d1b2a;
+            font-size: 13px;
+            font-family: monospace;
+        }
+        #request-log li:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 600px) {
+            nav {
+                padding: 15px 20px;
+            }
+            .endpoint-container {
+                padding: 15px 20px 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">Block Bridge</div>
+        <ul class="nav-links">
+            <li><a href="#">Home</a></li>
+            <li><a href="https://aboutus.com">About Us</a></li>
+            <li><a href="https://ourwebsite.com">Our Website</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+    </nav>
+
+    <div class="endpoint-heading">
+        <h2>Endpoint Data Management</h2>
+        <p>Fetching live market data from a REST API endpoint using JavaScript</p>
+    </div>
+
+    <div class="endpoint-container">
+
+        <div class="lookup-box">
+            <h3>Look Up Coin Price</h3>
+            <div class="field">
+                <label for="coin-input">Coin ID (e.g. bitcoin, ethereum, dogecoin)</label>
+                <input type="text" id="coin-input" placeholder="Enter a coin id">
+                <span class="error-msg" id="coin-error"></span>
+            </div>
+            <button id="fetch-btn">Fetch Price</button>
+            <p id="fetch-status"></p>
+        </div>
+
+        <div class="result-box">
+            <h3>Result</h3>
+            <div id="price-result">No data yet.</div>
+        </div>
+
+        <div class="log-box">
+            <h3>Request Log (Debug)</h3>
+            <ul id="request-log">
+                <li>No requests yet.</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <script>
+        // 1. Selecting DOM elements
+        const coinInput = document.getElementById('coin-input');
+        const coinError = document.getElementById('coin-error');
+        const fetchBtn = document.getElementById('fetch-btn');
+        const fetchStatus = document.getElementById('fetch-status');
+        const priceResult = document.getElementById('price-result');
+        const requestLog = document.getElementById('request-log');
+
+        const ENDPOINT_BASE = 'https://api.coingecko.com/api/v3/simple/price';
+        let isFirstLogEntry = true;
+
+        // 2. Input validation function
+        function validateCoinInput(value) {
+            if (value === '') {
+                return 'Coin id is required.';
+            }
+            if (!/^[a-z0-9-]+$/i.test(value)) {
+                return 'Use only letters, numbers and hyphens (e.g. matic-network).';
+            }
+            return null; // null means valid
+        }
+
+        // 3. Debug/log helper — records every request and response for testing
+        function addLogEntry(text) {
+            if (isFirstLogEntry) {
+                requestLog.innerHTML = '';
+                isFirstLogEntry = false;
+            }
+            const entry = document.createElement('li');
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = '[' + timestamp + '] ' + text;
+            requestLog.prepend(entry);
+            console.log('[Block Bridge Debug]', text); // console logging for debugging
+        }
+
+        // 4. Function that performs the API call using the Fetch API
+        async function fetchCoinPrice(coinId) {
+            const url = ENDPOINT_BASE + '?ids=' + encodeURIComponent(coinId) + '&vs_currencies=usd';
+            addLogEntry('Requesting: ' + url);
+
+            const response = await fetch(url);
+
+            addLogEntry('Response status: ' + response.status);
+
+            if (!response.ok) {
+                throw new Error('Endpoint returned status ' + response.status);
+            }
+
+            const data = await response.json();
+            return data;
+        }
+
+        // 5. Handling UI updates based on fetch results (success, empty, or error)
+        async function handleFetchClick() {
+            const coinValue = coinInput.value.trim().toLowerCase();
+
+            coinError.textContent = '';
+            fetchStatus.textContent = '';
+
+            // Run input validation before calling the endpoint
+            const validationError = validateCoinInput(coinValue);
+            if (validationError) {
+                coinError.textContent = validationError;
+                addLogEntry('Validation failed: ' + validationError);
+                return;
+            }
+
+            fetchBtn.disabled = true;
+            fetchStatus.textContent = 'Fetching data from endpoint...';
+            fetchStatus.className = 'status-loading';
+
+            try {
+                const data = await fetchCoinPrice(coinValue);
+
+                // Exception handling: endpoint responds but has no data for that id
+                if (!data[coinValue] || data[coinValue].usd === undefined) {
+                    throw new Error('No price data found for "' + coinValue + '".');
+                }
+
+                const price = data[coinValue].usd;
+                priceResult.textContent = coinValue.toUpperCase() + ': $' + price;
+                fetchStatus.textContent = 'Data retrieved successfully.';
+                fetchStatus.className = 'status-success';
+                addLogEntry('Success: ' + coinValue + ' = $' + price);
+
+            } catch (error) {
+                // Catches network failures, bad responses, and missing data
+                priceResult.textContent = 'No data available.';
+                fetchStatus.textContent = 'Error: ' + error.message;
+                fetchStatus.className = 'status-error';
+                addLogEntry('Error: ' + error.message);
+
+            } finally {
+                fetchBtn.disabled = false;
+            }
+        }
+
+        // 6. Event listener wiring (also allow pressing Enter in the input field)
+        fetchBtn.addEventListener('click', handleFetchClick);
+        coinInput.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                handleFetchClick();
+            }
+        });
+    </script>
+
+</body>
+</html>
